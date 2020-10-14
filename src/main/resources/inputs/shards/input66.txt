@@ -1,0 +1,1 @@
+`Managing Component Variability within Embedded Software Product Lines via Transformational Code Generation.` `2003` `PFE`	`Ian McRitchie` `T. John Brown` `Ivor T. A. Spence` 

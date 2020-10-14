@@ -1,0 +1,1 @@
+`A Meta-model for Representing Variability in Product Family Development.` `2003` `PFE`	`Felix Bachmann` `Michael Goedicke` `Julio Cesar Sampaio do Prado Leite` `Robert L. Nord` `Klaus Pohl` `Balasubramaniam Ramesh` `Alexander Vilbig` 

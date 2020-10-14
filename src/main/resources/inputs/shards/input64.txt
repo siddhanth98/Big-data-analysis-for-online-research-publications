@@ -1,0 +1,1 @@
+`Patterns in Product Family Architecture Design.` `2003` `PFE`	`Svein O. Hallsteinsen` `Tor Erlend Fgri` `Magne Syrstad` 
