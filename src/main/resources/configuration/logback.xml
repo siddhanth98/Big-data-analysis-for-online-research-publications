@@ -1,0 +1,16 @@
+<configuration>
+    <property name="RESOURCE" value="src/main/resources/inputs/task1" />
+
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>${RESOURCE}/task1.log</file>
+        <append>true</append>
+        <immediateFlush>false</immediateFlush>
+        <encoder>
+            <pattern>%highlight(%-5level %logger{35} - %msg%n)</pattern>
+        </encoder>
+    </appender>
+
+    <root level="DEBUG">
+        <appender-ref ref="FILE" />
+    </root>
+</configuration>

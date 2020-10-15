@@ -12,10 +12,15 @@ lazy val logbackClassic = "ch.qos.logback" % "logback-classic" % "1.2.3"
 lazy val slf4j = "org.slf4j" %"slf4j-api" %"1.7.30" % "test"
 lazy val typesafe = "com.typesafe" % "config" % "1.4.0"
 lazy val commonsCsv = "org.apache.commons" % "commons-csv" % "1.4"
+lazy val junit = "junit" % "junit" % "4.9" % Test
+lazy val junitInterface = "com.novocode" % "junit-interface" % "0.11" % Test
+lazy val mrunit = "org.apache.mrunit" % "mrunit" % "1.0.0" % Test classifier "hadoop1"
 
 lazy val thisProject = (project in file("."))
   .settings(
-    libraryDependencies ++= Seq(hadoopCore, scalaXml, logbackCore, logbackClassic, slf4j, typesafe, commonsCsv)
+    libraryDependencies ++= Seq(hadoopCore, scalaXml, logbackCore, logbackClassic, slf4j, typesafe, commonsCsv,
+    junit, junitInterface, mrunit),
+    crossPaths := true
   )
 
 // META-INF discarding

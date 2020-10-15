@@ -8,11 +8,16 @@ import org.apache.hadoop.mapreduce.lib.output.{FileOutputFormat, TextOutputForma
 import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.util.{Tool, ToolRunner}
 import org.apache.commons.io.FileUtils
-import java.io.File
+import java.io.{File, IOException}
+import org.apache.hadoop.mapred.FileAlreadyExistsException
 
+import ch.qos.logback.classic.util.ContextInitializer
 import hadoop.task1.Constants._
+import org.slf4j.{Logger, LoggerFactory}
 
 object Driver extends Configured with Tool {
+  /*System.setProperty(ContextInitializer.CONFIG_FILE_PROPERTY, "src/main/resources/configuration/logback.xml")
+  val logger: Logger = LoggerFactory.getLogger(Driver.getClass)*/
 
   @throws[Exception]
   def main(args: Array[String]): Unit = {
@@ -52,8 +57,14 @@ object Driver extends Configured with Tool {
     val numInputSplits = NLineInputFormat.getNumLinesPerSplit(job)
     println(numInputSplits)
 
-    if (job.isSuccessful) println("Job was successful")
-    else println("Job was not successful")
+    if (job.isSuccessful) {
+      println("Job was successful")
+//      logger.info("JOB SUCCESSFUL")
+    }
+    else {
+      println("Job was not successful")
+//      logger.error("JOB FAILED")
+    }
 
     if (localOutputDir.exists()) {
       FileUtils.deleteDirectory(localOutputDir)
@@ -65,10 +76,16 @@ object Driver extends Configured with Tool {
     returnValue
   }
 
+  /**
+   * This function will put all 138 hdfs input path dir names into a list and return it
+   */
   def getConcatenatedHdfsInputPathNames(index: Int): List[String] =
     if (index == numInputs-1) List(s"input$index")
     else List(s"input$index") ::: getConcatenatedHdfsInputPathNames(index+1)
 
+  /**
+   * This function will put all 138 local input path dir relative names into a list and return it
+   */
   def getConcatenatedLocalInputPathNames(index: Int): List[String] = {
     if (index == numInputs-1) List(s"$localInputPathName/input$index.txt")
     else List(s"$localInputPathName/input$index.txt") ::: getConcatenatedLocalInputPathNames(index+1)
