@@ -17,7 +17,7 @@ object ComputeSpreadSheet {
   @throws[IOException]
   def compute(): Unit = {
     val venueAuthorList = getVenueAndAuthors
-    val writer: FileWriter = new FileWriter("src/main/resources/spreadsheets/test.csv")
+    val writer: FileWriter = new FileWriter("src/main/resources/spreadsheets/task1.csv")
     val printer: CSVPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT)
     venueAuthorList.foreach(record => {
       record.foreach(e => printer.print(e))
