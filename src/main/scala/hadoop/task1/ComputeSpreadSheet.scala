@@ -17,7 +17,7 @@ object ComputeSpreadSheet {
   @throws[IOException]
   def compute(): Unit = {
     val venueAuthorList = getVenueAndAuthors
-    val writer: FileWriter = new FileWriter("src/main/resources/outputs/spreadsheets/test.csv")
+    val writer: FileWriter = new FileWriter("src/main/resources/spreadsheets/test.csv")
     val printer: CSVPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT)
     venueAuthorList.foreach(record => {
       record.foreach(e => printer.print(e))
@@ -27,7 +27,7 @@ object ComputeSpreadSheet {
   }
 
   def getVenueAndAuthors: List[List[String]] = {
-    val outputFile: File = new File("src/main/resources/outputs/output/part-r-00000")
+    val outputFile: File = new File("src/main/resources/outputs/job_outputs/task1/part-r-00000")
     val reader: Scanner = new Scanner(outputFile)
     val venueAuthorList: mutable.ListBuffer[List[String]] = new ListBuffer[List[String]]
 
