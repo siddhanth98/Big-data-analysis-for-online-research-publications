@@ -6,8 +6,10 @@ import scala.xml.{Elem, XML}
 object XmlParser {
   def main(args: Array[String]): Unit = {
     System.setProperty("entityExpansionLimit", String.valueOf(Integer.MAX_VALUE))
-    val xml: Elem = XML.load(new InputStreamReader(new FileInputStream("D:\\UIC\\Engineering Distributed Objects for Cloud Computing\\Homework 2\\shards_smaller\\dblp-copy137.xml"), "UTF-8"))
-    processTags(xml, 137)
+    for (i <- 0 to 137) {
+      val xml: Elem = XML.load(new InputStreamReader(new FileInputStream(s"D:\\UIC\\Engineering Distributed Objects for Cloud Computing\\Homework 2\\shards_smaller\\dblp-copy$i.xml"), "UTF-8"))
+      processTags(xml, i)
+    }
   }
 
   /**
