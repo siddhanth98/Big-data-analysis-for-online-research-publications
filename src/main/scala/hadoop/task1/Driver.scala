@@ -12,7 +12,8 @@ import java.io.{File, IOException}
 import org.apache.hadoop.mapred.FileAlreadyExistsException
 
 import ch.qos.logback.classic.util.ContextInitializer
-import hadoop.task1.Constants._
+import hadoop.Constants._
+import hadoop.task1.Task1Constants._
 import org.slf4j.{Logger, LoggerFactory}
 
 object Driver extends Configured with Tool {
@@ -38,7 +39,6 @@ object Driver extends Configured with Tool {
     val hdfsInputPathNames = getConcatenatedHdfsInputPathNames(0)
 
     val localOutputPath = new Path(localOutputPathName)
-
     val localOutputDir = new File(localOutputPathName)
 
     job.setInputFormatClass(classOf[KeyValueTextInputFormat])

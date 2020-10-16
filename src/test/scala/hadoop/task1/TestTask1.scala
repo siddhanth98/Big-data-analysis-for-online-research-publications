@@ -8,6 +8,9 @@ import org.apache.hadoop.io.Text
 import org.apache.hadoop.mrunit.mapreduce.{MapDriver, MapReduceDriver, ReduceDriver}
 import org.junit.{Before, Test}
 
+/**
+ * This class tests the mapper, reducer and the driver program of task1
+ */
 class TestTask1 {
   val mapper = new MyMapper
   val reducer = new MyReducer
@@ -49,6 +52,10 @@ class TestTask1 {
   val mapreduceOutputKey: String = config.getString("conf.MAPREDUCE_OUTPUT_KEY")
   val mapreduceOutputValue: String = config.getString("conf.MAPREDUCE_OUTPUT_VALUE")
 
+  /**
+   * This function will initialize the MR Unit Test map, reduce and mapReduce drivers to be tested
+   * using our mappers and reducers
+   */
   @Before
   def setup(): Unit = {
     mapDriver = MapDriver.newMapDriver(mapper)
@@ -58,6 +65,9 @@ class TestTask1 {
     mapreduceDriver.setReducer(reducer)
   }
 
+  /**
+   * This function will test the task1 mapper
+   */
   @Test
   def testMapper(): Unit = {
     mapDriver.withInput(new Text(mapperInputKey), new Text(mapperInputValue))
@@ -65,6 +75,9 @@ class TestTask1 {
     mapDriver.runTest(false)
   }
 
+  /**
+   * This function will test the task1 reducer
+   */
   @Test
   def testReducer(): Unit = {
     reduceDriver.withInput(new Text(reducerInputKey), reducerInputValue)
@@ -72,6 +85,9 @@ class TestTask1 {
     reduceDriver.runTest(false)
   }
 
+  /**
+   * This function will test the task1 driver
+   */
   @Test
   def testMapReduce(): Unit = {
     mapreduceDriver.withInput(new Text(mapreduceInput1Key), new Text(mapreduceInput1Value))
