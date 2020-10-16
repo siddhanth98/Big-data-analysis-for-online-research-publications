@@ -1,4 +1,4 @@
-package hadoop.task2
+package hadoop.task3
 
 import java.io.File
 import java.util
