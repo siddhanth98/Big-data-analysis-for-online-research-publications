@@ -11,12 +11,12 @@ import scala.collection.mutable.ListBuffer
 object ComputeSpreadSheet {
 
   def main(args: Array[String]): Unit = {
-    compute()
+    compute(args(0))
   }
 
   @throws[IOException]
-  def compute(): Unit = {
-    val venueAuthorList = getVenueAndAuthors
+  def compute(path: String): Unit = {
+    val venueAuthorList = getVenueAndAuthors(path)
     val writer: FileWriter = new FileWriter("src/main/resources/spreadsheets/task1.csv")
     val printer: CSVPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT)
     venueAuthorList.foreach(record => {
@@ -26,8 +26,8 @@ object ComputeSpreadSheet {
     writer.close()
   }
 
-  def getVenueAndAuthors: List[List[String]] = {
-    val outputFile: File = new File("src/main/resources/outputs/job_outputs/task1/part-r-00000")
+  def getVenueAndAuthors(path: String): List[List[String]] = {
+    val outputFile: File = new File(s"src/main/resources/outputs/job_outputs/task1/$path/part-r-00000")
     val reader: Scanner = new Scanner(outputFile)
     val venueAuthorList: mutable.ListBuffer[List[String]] = new ListBuffer[List[String]]
 

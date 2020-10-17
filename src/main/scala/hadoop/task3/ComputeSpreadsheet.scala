@@ -10,13 +10,13 @@ import scala.collection.mutable
 object ComputeSpreadsheet {
 
   def main(args: Array[String]): Unit = {
-    compute()
+    compute(args(0))
   }
 
-  def compute(): Unit = {
+  def compute(path: String): Unit = {
     val csv = new FileWriter("src/main/resources/spreadsheets/task3.csv")
     val printer: CSVPrinter = new CSVPrinter(csv, CSVFormat.DEFAULT)
-    val recordList = getVenueAndPublicationsList
+    val recordList = getVenueAndPublicationsList(path)
     recordList.foreach(record => {
       record.foreach(e => printer.print(e))
       printer.println()
@@ -24,8 +24,8 @@ object ComputeSpreadsheet {
     csv.close()
   }
 
-  def getVenueAndPublicationsList: List[List[String]] = {
-    val hadoopOutputFile = new File("src/main/resources/outputs/job_outputs/task3/output/part-r-00000")
+  def getVenueAndPublicationsList(path: String): List[List[String]] = {
+    val hadoopOutputFile = new File(s"src/main/resources/outputs/job_outputs/task3/$path/part-r-00000")
     val scanner = new Scanner(hadoopOutputFile)
     val recordList = new mutable.ListBuffer[List[String]]
 

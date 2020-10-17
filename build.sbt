@@ -15,11 +15,12 @@ lazy val commonsCsv = "org.apache.commons" % "commons-csv" % "1.4"
 lazy val junit = "junit" % "junit" % "4.9" % Test
 lazy val junitInterface = "com.novocode" % "junit-interface" % "0.11" % Test
 lazy val mrunit = "org.apache.mrunit" % "mrunit" % "1.0.0" % Test classifier "hadoop1"
+lazy val commonsIo = "commons-io" % "commons-io" % "2.8.0"
 
 lazy val thisProject = (project in file("."))
   .settings(
     libraryDependencies ++= Seq(hadoopCore, scalaXml, logbackCore, logbackClassic, slf4j, typesafe, commonsCsv,
-    junit, junitInterface, mrunit),
+    junit, junitInterface, mrunit, commonsIo),
     crossPaths := true
   )
 
