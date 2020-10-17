@@ -1,12 +1,12 @@
-package hadoop.task4
+package hadoop.task2
 
 import java.io.File
 
-import hadoop.Constants.{localInputPathName, numInputs, hdfsOutputPath}
-import hadoop.task4.Task4Constants.localOutputPathName
+import hadoop.Constants.{hdfsOutputPath, localInputPathName, numInputs}
+import hadoop.task2.Task2Constants.localOutputPathName
 import org.apache.hadoop.conf.Configured
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.hadoop.io.Text
+import org.apache.hadoop.io.{IntWritable, Text}
 import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.input.{FileInputFormat, KeyValueTextInputFormat}
 import org.apache.hadoop.mapreduce.lib.output.{FileOutputFormat, TextOutputFormat}
@@ -23,7 +23,7 @@ object Driver extends Configured with Tool {
 
     val job: Job = new Job()
     job.setJarByClass(Driver.getClass)
-    job.setJobName("MaximumAuthorCountComputer")
+    job.setJobName("Task3")
 
     val fs: FileSystem = FileSystem.get(job.getConfiguration)
 
@@ -35,7 +35,7 @@ object Driver extends Configured with Tool {
 
     job.setInputFormatClass(classOf[KeyValueTextInputFormat])
     job.setOutputKeyClass(classOf[Text])
-    job.setOutputValueClass(classOf[Text])
+    job.setOutputValueClass(classOf[IntWritable])
     job.setOutputFormatClass(classOf[TextOutputFormat[Text, Text]])
 
     FileInputFormat.addInputPaths(job, hdfsInputPathNames.mkString(","))
@@ -47,12 +47,21 @@ object Driver extends Configured with Tool {
 
     if (fs.exists(hdfsOutputPath)) fs.delete(hdfsOutputPath, true)
 
-    val returnValue = if (job.waitForCompletion(true)) 0 else 1
-    if (job.isSuccessful) println("Job successful")
-    else println("Job not successful")
+    val returnValue: Int = if (job.waitForCompletion(true)) 0 else 1
+
+    if (job.isSuccessful) {
+      println("Job was successful")
+      //      logger.info("JOB SUCCESSFUL")
+    }
+    else {
+      println("Job was not successful")
+      //      logger.error("JOB FAILED")
+    }
+
     if (!localOutputDir.exists())
       localOutputDir.mkdir()
     fs.copyToLocalFile(hdfsOutputPath, localOutputPath)
+
     fs.delete(hdfsOutputPath, true)
     returnValue
   }
