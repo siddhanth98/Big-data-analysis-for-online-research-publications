@@ -1,4 +1,4 @@
-package hadoop.task4
+package hadoop.task2
 
 import java.io.{File, FileWriter}
 import java.util.Scanner
@@ -9,7 +9,7 @@ import scala.collection.mutable.ListBuffer
 
 /**
  * This singleton object uses the CSVPrinter class provided by the org.apache.commons dependency to create a spreadsheet
- * of all outputs obtained from the task4 mapreduce implementation
+ * of all outputs obtained from the task2 mapreduce implementation
  */
 object ComputeSpreadSheet {
   def main(args: Array[String]): Unit = {
@@ -21,11 +21,11 @@ object ComputeSpreadSheet {
    * @param path The task output path passed as cmd argument
    */
   def compute(path: String): Unit = {
-    val csv = new FileWriter("src/main/resources/spreadsheets/task4.csv")
-    val printer: CSVPrinter = new CSVPrinter(csv, CSVFormat.DEFAULT.withHeader("Venue", "List of publications"))
-    val recordList = getVenueTitlesList(path)
+    val csv = new FileWriter("src/main/resources/spreadsheets/task2.csv")
+    val printer = new CSVPrinter(csv, CSVFormat.DEFAULT.withHeader("Authors with 10+ consecutive years of publications"))
+    val recordList = getAuthorList(path)
     recordList.foreach(record => {
-      record.foreach(e => printer.print(e))
+      printer.print(record)
       printer.println()
     })
     csv.close()
@@ -37,13 +37,14 @@ object ComputeSpreadSheet {
    * if a recursive approach for an immutable list is used for a large number of lines in the output file
    * @param path The task output path passed as cmd argument
    */
-  def getVenueTitlesList(path: String): List[List[String]] = {
-    val recordList: ListBuffer[List[String]] = new ListBuffer[List[String]]
-    val scanner = new Scanner(new File(s"src/main/resources/outputs/job_outputs/task4/$path/part-r-00000"))
+  def getAuthorList(path: String): List[String] = {
+    val jobOutputFile = new File(s"src/main/resources/outputs/job_outputs/task2/$path/part-r-00000")
+    val scanner = new Scanner(jobOutputFile)
+    val recordList: ListBuffer[String] = new ListBuffer[String]
+
     while(scanner.hasNext) {
-      val record = scanner.nextLine().split("` ")
-        .map(e => e.strip().stripPrefix("`").stripSuffix("`")).toList
-      recordList.append(record)
+      val line = scanner.nextLine().split("\t")(1).stripPrefix("`").stripSuffix("`")
+      if (line.length > 0) recordList.append(line)
     }
     recordList.toList
   }
