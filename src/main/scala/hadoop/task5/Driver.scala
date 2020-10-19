@@ -1,17 +1,17 @@
-package hadoop.task6
+package hadoop.task5
 
 import java.io.File
 
 import hadoop.Constants.{hdfsOutputPath, localInputPathName, numInputs}
-import hadoop.task6.Task6Constants.{hdfsFinalOutputPath, localOutputPathName}
 import org.apache.hadoop.conf.Configured
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.hadoop.io.{IntWritable, Text}
 import org.apache.hadoop.mapreduce.Job
-import org.apache.hadoop.mapreduce.lib.input.{FileInputFormat, KeyValueTextInputFormat, TextInputFormat}
-import org.apache.hadoop.mapreduce.lib.jobcontrol.ControlledJob
-import org.apache.hadoop.mapreduce.lib.output.{FileOutputFormat, TextOutputFormat}
 import org.apache.hadoop.util.{Tool, ToolRunner}
+import hadoop.task5.Task5Constants._
+import org.apache.hadoop.io.{IntWritable, Text}
+import org.apache.hadoop.mapreduce.lib.input.{FileInputFormat, KeyValueTextInputFormat, TextInputFormat}
+import org.apache.hadoop.mapreduce.lib.output.{FileOutputFormat, TextOutputFormat}
+import hadoop.task6.DescendingIntWritableComparable
 
 object Driver extends Configured with Tool {
   def main(args: Array[String]): Unit = {
@@ -24,7 +24,7 @@ object Driver extends Configured with Tool {
 
     val job: Job = new Job()
     job.setJarByClass(Driver.getClass)
-    job.setJobName("SingleAuthorPublicationCount")
+    job.setJobName("CoAuthorCountComputer")
 
     val fsJob1: FileSystem = FileSystem.get(job.getConfiguration)
 
@@ -36,7 +36,7 @@ object Driver extends Configured with Tool {
 
     job.setInputFormatClass(classOf[KeyValueTextInputFormat])
     job.setMapOutputKeyClass(classOf[Text])
-    job.setMapOutputValueClass(classOf[IntWritable])
+    job.setMapOutputValueClass(classOf[Text])
     job.setOutputKeyClass(classOf[Text])
     job.setOutputValueClass(classOf[IntWritable])
     job.setOutputFormatClass(classOf[TextOutputFormat[Text, IntWritable]])
@@ -49,10 +49,9 @@ object Driver extends Configured with Tool {
     job.setReducerClass(classOf[Job1Reducer])
 
     val job2: Job = new Job()
-    job2.setJarByClass(Driver.getClass)
-    job2.setJobName("TopAuthorsComputer")
 
-    val fsJob2 = FileSystem.get(job2.getConfiguration)
+    job2.setJarByClass(Driver.getClass)
+    job2.setJobName("MaximumCoAuthorCountSort")
 
     job2.setInputFormatClass(classOf[TextInputFormat])
     job2.setMapOutputKeyClass(classOf[IntWritable])
@@ -63,33 +62,27 @@ object Driver extends Configured with Tool {
 
     FileInputFormat.addInputPath(job2, hdfsOutputPath)
     FileOutputFormat.setOutputPath(job2, hdfsFinalOutputPath)
+
     job2.setMapperClass(classOf[Job2Mapper])
     job2.setSortComparatorClass(classOf[DescendingIntWritableComparable])
     job2.setReducerClass(classOf[Job2Reducer])
 
+    val fsJob2 = FileSystem.get(job2.getConfiguration)
+
     if (fsJob1.exists(hdfsOutputPath)) fsJob1.delete(hdfsOutputPath, true)
     if (fsJob2.exists(hdfsFinalOutputPath)) fsJob2.delete(hdfsFinalOutputPath, true)
 
-    val job1Controller: ControlledJob = new ControlledJob(job.getConfiguration)
-    job1Controller.setJob(job)
-    val job2Controller: ControlledJob = new ControlledJob(job2.getConfiguration)
-    job2Controller.setJob(job2)
-    job2Controller.addDependingJob(job1Controller)
-
     val returnValue = if (job.waitForCompletion(true)) {
-      if (job.isSuccessful && job2.waitForCompletion(true)) {
-        println("Both jobs successful")
-        0
-      }
+      fsJob1.copyToLocalFile(hdfsOutputPath, localOutputPath)
+      if (job2.waitForCompletion(true)) 0
       else 1
-    }
-    else 1
+    } else 1
 
     if (!localOutputDir.exists())
       localOutputDir.mkdir()
 
-    fsJob1.delete(hdfsOutputPath, true)
     fsJob2.copyToLocalFile(hdfsFinalOutputPath, localOutputPath)
+    fsJob1.delete(hdfsOutputPath, true)
     fsJob2.delete(hdfsFinalOutputPath, true)
     returnValue
   }
@@ -108,4 +101,5 @@ object Driver extends Configured with Tool {
     if (index == numInputs-1) List(s"$localInputPathName/input$index.txt")
     else List(s"$localInputPathName/input$index.txt") ::: getConcatenatedLocalInputPathNames(index+1)
   }
+
 }
