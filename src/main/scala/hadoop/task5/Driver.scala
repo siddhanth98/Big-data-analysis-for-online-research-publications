@@ -13,7 +13,15 @@ import org.apache.hadoop.mapreduce.lib.input.{FileInputFormat, KeyValueTextInput
 import org.apache.hadoop.mapreduce.lib.output.{FileOutputFormat, TextOutputFormat}
 import hadoop.task6.DescendingIntWritableComparable
 
+/**
+ * This driver object defines 2 jobs -
+ * The 1st job will find the total coAuthorCount of each author and write that as its output
+ * The 2nd job will use a custom descendingIntWritable comparator to sort authors
+ * in the descending order by their coAuthorCount output from the 1st job and will write the author and coAuthorCount
+ * as the output in that order
+ */
 object Driver extends Configured with Tool {
+
   def main(args: Array[String]): Unit = {
     val exitCode = ToolRunner.run(Driver, args)
     System.exit(exitCode)

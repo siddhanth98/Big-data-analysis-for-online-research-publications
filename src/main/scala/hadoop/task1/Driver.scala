@@ -1,15 +1,13 @@
 package hadoop.task1
 
-import org.apache.hadoop.conf.{Configuration, Configured}
+import org.apache.hadoop.conf.Configured
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.hadoop.io.{IntWritable, Text}
-import org.apache.hadoop.mapreduce.lib.input.{FileInputFormat, KeyValueTextInputFormat, NLineInputFormat, TextInputFormat}
+import org.apache.hadoop.io.Text
+import org.apache.hadoop.mapreduce.lib.input.{FileInputFormat, KeyValueTextInputFormat}
 import org.apache.hadoop.mapreduce.lib.output.{FileOutputFormat, TextOutputFormat}
 import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.util.{Tool, ToolRunner}
-import org.apache.commons.io.FileUtils
-import java.io.{File, IOException}
-import org.apache.hadoop.mapred.FileAlreadyExistsException
+import java.io.File
 
 import ch.qos.logback.classic.util.ContextInitializer
 import hadoop.Constants._
@@ -17,8 +15,8 @@ import hadoop.task1.Task1Constants._
 import org.slf4j.{Logger, LoggerFactory}
 
 object Driver extends Configured with Tool {
-  /*System.setProperty(ContextInitializer.CONFIG_FILE_PROPERTY, "src/main/resources/configuration/logback.xml")
-  val logger: Logger = LoggerFactory.getLogger(Driver.getClass)*/
+  System.setProperty(ContextInitializer.CONFIG_FILE_PROPERTY, "src/main/resources/configuration/logback.xml")
+  val logger: Logger = LoggerFactory.getLogger(Driver.getClass)
 
   @throws[Exception]
   def main(args: Array[String]): Unit = {
@@ -31,7 +29,7 @@ object Driver extends Configured with Tool {
 
     val job: Job = new Job()
     job.setJarByClass(Driver.getClass)
-    job.setJobName("Task1")
+    job.setJobName("Top10AuthorsPerVenue")
 
     val fs: FileSystem = FileSystem.get(job.getConfiguration)
 
@@ -42,6 +40,8 @@ object Driver extends Configured with Tool {
     val localOutputDir = new File(localOutputPathName)
 
     job.setInputFormatClass(classOf[KeyValueTextInputFormat])
+    job.setMapOutputKeyClass(classOf[Text])
+    job.setMapOutputValueClass(classOf[Text])
     job.setOutputKeyClass(classOf[Text])
     job.setOutputValueClass(classOf[Text])
     job.setOutputFormatClass(classOf[TextOutputFormat[Text, Text]])
@@ -53,25 +53,21 @@ object Driver extends Configured with Tool {
     job.setMapperClass(classOf[MyMapper])
     job.setReducerClass(classOf[MyReducer])
 
+    if (fs.exists(hdfsOutputPath)) fs.delete(hdfsOutputPath, true)
+
     val returnValue: Int = if (job.waitForCompletion(true)) 0 else 1
-    val numInputSplits = NLineInputFormat.getNumLinesPerSplit(job)
-    println(numInputSplits)
 
     if (job.isSuccessful) {
       println("Job was successful")
-//      logger.info("JOB SUCCESSFUL")
+      logger.info("JOB SUCCESSFUL")
     }
     else {
       println("Job was not successful")
-//      logger.error("JOB FAILED")
+      logger.error("JOB FAILED")
     }
 
-    if (localOutputDir.exists()) {
-      FileUtils.deleteDirectory(localOutputDir)
-      localOutputDir.mkdir()
-    }
+    if (!localOutputDir.exists()) localOutputDir.mkdir()
     fs.copyToLocalFile(hdfsOutputPath, localOutputPath)
-
     fs.delete(hdfsOutputPath, true)
     returnValue
   }

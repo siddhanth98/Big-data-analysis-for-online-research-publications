@@ -7,6 +7,11 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable
 
+/**
+ * Given key = `title` `year` `venue` and value = `author1` `author2` `author3` ...
+ * for each author present in the value text, this mapper will write the author as the key and all the other coAuthor names
+ * as the corresponding value text in its output
+ */
 class Job1Mapper extends Mapper[Text, Text, Text, Text] {
   System.setProperty(ContextInitializer.CONFIG_FILE_PROPERTY, "src/main/resources/configuration/logback.xml")
   val logger: Logger = LoggerFactory.getLogger(classOf[Job1Mapper])
@@ -21,6 +26,11 @@ class Job1Mapper extends Mapper[Text, Text, Text, Text] {
     authorList.foreach(a => context.write(new Text(a), new Text(coAuthors.get(a).mkString(" "))))
   }
 
+  /**
+   * This function will compute a hashmap of author to coAuthors for each author and return it
+   * A mutable map is used to avoid running into stack overflow errors for large number of authors for a publication
+   * because of a recursive approach
+   */
   def getCoAuthors(authors: List[String]): mutable.Map[String, List[String]] = {
     val coAuthorMap: mutable.Map[String, List[String]] = mutable.Map[String, List[String]]()
     for (i <- authors.indices)

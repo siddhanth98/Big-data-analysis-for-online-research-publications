@@ -2,6 +2,7 @@ package hadoop.task3
 
 import java.io.File
 
+import ch.qos.logback.classic.util.ContextInitializer
 import hadoop.Constants.{hdfsOutputPath, localInputPathName, numInputs}
 import hadoop.task3.Task3Constants._
 import org.apache.commons.io.FileUtils
@@ -12,8 +13,12 @@ import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.input.{FileInputFormat, KeyValueTextInputFormat, NLineInputFormat}
 import org.apache.hadoop.mapreduce.lib.output.{FileOutputFormat, TextOutputFormat}
 import org.apache.hadoop.util.{Tool, ToolRunner}
+import org.slf4j.{Logger, LoggerFactory}
 
 object Driver extends Configured with Tool {
+  System.setProperty(ContextInitializer.CONFIG_FILE_PROPERTY, "src/main/resources/configuration/logback.xml")
+  val logger: Logger = LoggerFactory.getLogger(Driver.getClass)
+
   def main(args: Array[String]): Unit = {
     val exitCode = ToolRunner.run(Driver, args)
     System.exit(exitCode)
@@ -46,23 +51,23 @@ object Driver extends Configured with Tool {
     job.setMapperClass(classOf[MyMapper])
     job.setReducerClass(classOf[MyReducer])
 
+    if (fs.exists(hdfsOutputPath)) fs.delete(hdfsOutputPath, true)
+
     val returnValue: Int = if (job.waitForCompletion(true)) 0 else 1
     val numInputSplits = NLineInputFormat.getNumLinesPerSplit(job)
     println(s"Number of splits - $numInputSplits")
 
     if (job.isSuccessful) {
       println("Job was successful")
-      //      logger.info("JOB SUCCESSFUL")
+      logger.info("JOB SUCCESSFUL")
     }
     else {
       println("Job was not successful")
-      //      logger.error("JOB FAILED")
+      logger.error("JOB FAILED")
     }
 
-    if (localOutputDir.exists()) {
-      FileUtils.deleteDirectory(localOutputDir)
-      localOutputDir.mkdir()
-    }
+    if (!localOutputDir.exists()) localOutputDir.mkdir()
+
     fs.copyToLocalFile(hdfsOutputPath, localOutputPath)
 
     fs.delete(hdfsOutputPath, true)

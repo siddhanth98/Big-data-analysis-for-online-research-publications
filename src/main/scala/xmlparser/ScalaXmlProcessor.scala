@@ -19,7 +19,7 @@ object ScalaXmlProcessor {
   def main(args: Array[String]): Unit = {
     System.setProperty("entityExpansionLimit", String.valueOf(Integer.MAX_VALUE))
     val inputFactory: XMLInputFactory = XMLInputFactory.newInstance()
-    val reader: Reader = new FileReader("D:\\UIC\\Engineering Distributed Objects for Cloud Computing\\Homework 2\\dblp.xml")
+    val reader: Reader = new FileReader("src/main/resources/inputs/dblp.xml")
 
     val writerFactory: XMLOutputFactory = XMLOutputFactory.newInstance()
     val eventFactory: XMLEventFactory = XMLEventFactory.newInstance()

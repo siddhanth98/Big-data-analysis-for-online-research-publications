@@ -2,6 +2,7 @@ package hadoop.task2
 
 import java.io.File
 
+import ch.qos.logback.classic.util.ContextInitializer
 import hadoop.Constants.{hdfsOutputPath, localInputPathName, numInputs}
 import hadoop.task2.Task2Constants.localOutputPathName
 import org.apache.hadoop.conf.Configured
@@ -11,8 +12,12 @@ import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.input.{FileInputFormat, KeyValueTextInputFormat}
 import org.apache.hadoop.mapreduce.lib.output.{FileOutputFormat, TextOutputFormat}
 import org.apache.hadoop.util.{Tool, ToolRunner}
+import org.slf4j.{Logger, LoggerFactory}
 
 object Driver extends Configured with Tool {
+  System.setProperty(ContextInitializer.CONFIG_FILE_PROPERTY, "src/main/resources/configuration/logback.xml")
+  val logger: Logger = LoggerFactory.getLogger(Driver.getClass)
+
   def main(args: Array[String]): Unit = {
     val exitCode = ToolRunner.run(Driver, args)
     System.exit(exitCode)
@@ -23,7 +28,7 @@ object Driver extends Configured with Tool {
 
     val job: Job = new Job()
     job.setJarByClass(Driver.getClass)
-    job.setJobName("Task3")
+    job.setJobName("AuthorsWithTenPlusContiguousYearsOfPublicationsFinder")
 
     val fs: FileSystem = FileSystem.get(job.getConfiguration)
 
@@ -51,11 +56,11 @@ object Driver extends Configured with Tool {
 
     if (job.isSuccessful) {
       println("Job was successful")
-      //      logger.info("JOB SUCCESSFUL")
+            logger.info("JOB SUCCESSFUL")
     }
     else {
       println("Job was not successful")
-      //      logger.error("JOB FAILED")
+            logger.error("JOB FAILED")
     }
 
     if (!localOutputDir.exists())

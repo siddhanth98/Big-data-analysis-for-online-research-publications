@@ -26,7 +26,10 @@ object ComputeSpreadSheet {
   def compute(path: String): Unit = {
     val venueAuthorList = getVenueAndAuthors(path)
     val writer: FileWriter = new FileWriter("src/main/resources/spreadsheets/task1.csv")
-    val printer: CSVPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader("Venue", "List of authors"))
+    val printer: CSVPrinter =
+      new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader("Venue", "Author1", "Author2", "Author3", "Author4", "Author5",
+      "Author6", "Author7", "Author8", "Author9", "Author10"))
+
     venueAuthorList.foreach(record => {
       record.foreach(e => printer.print(e))
       printer.println()

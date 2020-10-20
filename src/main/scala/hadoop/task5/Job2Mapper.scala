@@ -3,6 +3,10 @@ package hadoop.task5
 import org.apache.hadoop.io.{IntWritable, LongWritable, Text}
 import org.apache.hadoop.mapreduce.Mapper
 
+/**
+ * This mapper will simply invert the key and the value input to it and write the output as:
+ * key = `coAuthorCount` value = `author`
+ */
 class Job2Mapper extends Mapper[LongWritable, Text, IntWritable, Text] {
   override def map(key: LongWritable, value: Text, context: Mapper[LongWritable, Text, IntWritable, Text]#Context): Unit = {
     val author = extractAuthorFromText(value)

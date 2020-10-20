@@ -2,7 +2,8 @@ package hadoop.task4
 
 import java.io.File
 
-import hadoop.Constants.{localInputPathName, numInputs, hdfsOutputPath}
+import ch.qos.logback.classic.util.ContextInitializer
+import hadoop.Constants.{hdfsOutputPath, localInputPathName, numInputs}
 import hadoop.task4.Task4Constants.localOutputPathName
 import org.apache.hadoop.conf.Configured
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -11,8 +12,12 @@ import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.input.{FileInputFormat, KeyValueTextInputFormat}
 import org.apache.hadoop.mapreduce.lib.output.{FileOutputFormat, TextOutputFormat}
 import org.apache.hadoop.util.{Tool, ToolRunner}
+import org.slf4j.{Logger, LoggerFactory}
 
 object Driver extends Configured with Tool {
+  System.setProperty(ContextInitializer.CONFIG_FILE_PROPERTY, "src/main/resources/configuration/logback.xml")
+  val logger: Logger = LoggerFactory.getLogger(Driver.getClass)
+
   def main(args: Array[String]): Unit = {
     val exitCode = ToolRunner.run(Driver, args)
     System.exit(exitCode)
@@ -48,10 +53,17 @@ object Driver extends Configured with Tool {
     if (fs.exists(hdfsOutputPath)) fs.delete(hdfsOutputPath, true)
 
     val returnValue = if (job.waitForCompletion(true)) 0 else 1
-    if (job.isSuccessful) println("Job successful")
-    else println("Job not successful")
-    if (!localOutputDir.exists())
-      localOutputDir.mkdir()
+
+    if (job.isSuccessful) {
+      println("Job successful")
+      logger.info("JOB SUCCESSFUL")
+    }
+    else {
+      println("Job not successful")
+      logger.info("JOB FAILED")
+    }
+
+    if (!localOutputDir.exists()) localOutputDir.mkdir()
     fs.copyToLocalFile(hdfsOutputPath, localOutputPath)
     fs.delete(hdfsOutputPath, true)
     returnValue

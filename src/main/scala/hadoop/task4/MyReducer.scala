@@ -1,7 +1,9 @@
 package hadoop.task4
 
+import ch.qos.logback.classic.util.ContextInitializer
 import org.apache.hadoop.io.Text
 import org.apache.hadoop.mapreduce.Reducer
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.ListBuffer
 
@@ -13,9 +15,13 @@ import scala.collection.mutable.ListBuffer
  * It will give the output as - `venue` (key) : `title1` `title2` `title3` `title4`...
  */
 class MyReducer extends Reducer[Text, Text, Text, Text] {
+  System.setProperty(ContextInitializer.CONFIG_FILE_PROPERTY, "src/main/resources/configuration/logback.xml")
+  val logger: Logger = LoggerFactory.getLogger(classOf[MyReducer])
+
   override def reduce(key: Text, values: java.lang.Iterable[Text], context: Reducer[Text, Text, Text,Text]#Context): Unit = {
     val valuesList = getListFromIterator(values)
     val maxAuthorCountTitles = getMaxAuthorCountTitles(valuesList, getMaxAuthorCount(valuesList))
+    logger.info(s"Writing key = ${key.toString} value = $maxAuthorCountTitles")
     context.write(key, new Text(maxAuthorCountTitles))
   }
 

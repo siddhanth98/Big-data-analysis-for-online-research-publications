@@ -14,8 +14,8 @@ import scala.util.Sorting
  * venue as its output key and sorted author names list as its output value
  */
 class MyReducer extends Reducer[Text, Text, Text, Text] {
-  /*System.setProperty(ContextInitializer.CONFIG_FILE_PROPERTY, "src/main/resources/configuration/logback.xml")
-  val logger: Logger = LoggerFactory.getLogger(classOf[MyReducer])*/
+  System.setProperty(ContextInitializer.CONFIG_FILE_PROPERTY, "src/main/resources/configuration/logback.xml")
+  val logger: Logger = LoggerFactory.getLogger(classOf[MyReducer])
 
   override def reduce(key: Text, values: java.lang.Iterable[Text], context: Reducer[Text, Text, Text, Text]#Context): Unit = {
 
@@ -24,7 +24,7 @@ class MyReducer extends Reducer[Text, Text, Text, Text] {
     val authorCountMap = mutable.Map[String, Int]()
     authorList.foreach (author => authorCountMap += (author -> (authorCountMap.getOrElse(author, 0)+1)))
     val finalAuthorNames = getTopAuthors(authorCountMap)
-//    logger.info(s"Venue - $key -> Authors - $finalAuthorNames")
+    logger.info(s"Venue - $key -> Authors - $finalAuthorNames")
     context.write(new Text(s"$key\t|\t"), new Text(finalAuthorNames))
   }
 
@@ -48,7 +48,10 @@ class MyReducer extends Reducer[Text, Text, Text, Text] {
    */
   def getAuthorListFromInput(iter: java.util.Iterator[Text]): List[String] = {
     val resultList: mutable.ListBuffer[String] = new mutable.ListBuffer[String]
-    while(iter.hasNext) iter.next().toString.split("` ").toList.foreach(author => resultList.prepend("`".concat(author.stripPrefix("`").stripSuffix("`")).concat("`")))
+    while(iter.hasNext)
+      iter.next().toString.split("` ")
+        .toList
+        .foreach(author => resultList.prepend("`".concat(author.stripPrefix("`").stripSuffix("`")).concat("`")))
     resultList.toList.reverse
   }
 

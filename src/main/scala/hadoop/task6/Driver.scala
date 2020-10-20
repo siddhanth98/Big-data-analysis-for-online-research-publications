@@ -13,6 +13,13 @@ import org.apache.hadoop.mapreduce.lib.jobcontrol.ControlledJob
 import org.apache.hadoop.mapreduce.lib.output.{FileOutputFormat, TextOutputFormat}
 import org.apache.hadoop.util.{Tool, ToolRunner}
 
+/**
+ * This driver object defines 2 jobs similar to task5
+ * The 1st job will find the number of publications that each author has published by himself
+ * and will write the output as the author name and the publication count
+ * The 2nd job will take in the author-count input and will produce the authors in descending order
+ * based on the solo-publication count
+ */
 object Driver extends Configured with Tool {
   def main(args: Array[String]): Unit = {
     val exitCode = ToolRunner.run(Driver, args)

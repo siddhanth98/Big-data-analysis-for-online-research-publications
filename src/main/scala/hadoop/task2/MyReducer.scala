@@ -1,7 +1,9 @@
 package hadoop.task2
 
+import ch.qos.logback.classic.util.ContextInitializer
 import org.apache.hadoop.io.{IntWritable, Text}
 import org.apache.hadoop.mapreduce.Reducer
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable
 
@@ -11,8 +13,14 @@ import scala.collection.mutable
  * of length >= 10 for the years, then it will output that author otherwise it would not output anything
  */
 class MyReducer extends Reducer[Text, IntWritable, Text, Text] {
+  System.setProperty(ContextInitializer.CONFIG_FILE_PROPERTY, "src/main/resources/configuration/logback.xml")
+  val logger: Logger = LoggerFactory.getLogger(classOf[MyReducer])
+
   override def reduce(key: Text, values: java.lang.Iterable[IntWritable], context: Reducer[Text, IntWritable, Text, Text]#Context): Unit =
-    if (hasMoreThanTenYears(values)) context.write(new Text(""), new Text(s"`${key.toString}`"))
+    if (hasMoreThanTenYears(values)) {
+      logger.info(s"Writing author - ${key.toString}")
+      context.write(new Text(""), new Text(s"`${key.toString}`"))
+    }
 
   /**
    * This function will convert the given iterable of values into a set to remove the duplicate years as a single author
