@@ -19,11 +19,13 @@ class Job1Mapper extends Mapper[Text, Text, Text, Text] {
   override def map(key: Text, value: Text, context: Mapper[Text, Text, Text, Text]#Context): Unit = {
     logger.info(s"got these authors as the values - ${value.toString}\n")
 
-    val authorList = value.toString.split("` `").toList.map(e => e.strip().stripPrefix("`").stripSuffix("`"))
+    val authorList = value.toString.split("` `").toList.map(e => s"`${e.strip().stripPrefix("`").stripSuffix("`")}`")
     val coAuthors = getCoAuthors(authorList)
     logger.info(s"got the author map as follows:")
     coAuthors.keySet.foreach(a => logger.info(s"$a -> ${coAuthors.get(a).mkString(" ")}\n"))
-    authorList.foreach(a => context.write(new Text(a), new Text(coAuthors.get(a).mkString(" "))))
+    authorList.foreach(a => {
+      context.write(new Text(a.strip().stripPrefix("`").stripSuffix("`")), new Text(coAuthors(a.strip().stripPrefix("`").stripSuffix("`")).mkString(" ")))
+    })
   }
 
   /**
