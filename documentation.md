@@ -144,3 +144,7 @@ The reducer will simply take in the input and write it as it is in the final out
   
 - Similar to task5, 4 tests are defined for this task in the test file hadoop.task6.TestTask6. They can be run using:  
 `sbt testOnly hadoop.task6.TestTask6`
+
+### AWS EMR
+- This video shows the running of the task1 job on an AWS EMR cluster.
+- https://www.youtube.com/watch?v=iU2y5y9SJ90&feature=youtu.be 
