@@ -22,6 +22,6 @@ class MyMapper extends Mapper[Text, Text, Text, Text] {
     }
   }
 
-  def extractVenue(key: String): String = key.split("` ")(2).stripPrefix("`").stripSuffix("`")
-  def extractPublicationTitle(key: String): String = key.split("` ")(0).stripPrefix("`").stripSuffix("`")
+  def extractVenue(key: String): String = key.split("` `")(2).stripPrefix("`").stripSuffix("`")
+  def extractPublicationTitle(key: String): String = key.split("` `")(0).stripPrefix("`").stripSuffix("`")
 }

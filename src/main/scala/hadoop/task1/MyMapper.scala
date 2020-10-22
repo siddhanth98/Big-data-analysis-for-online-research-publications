@@ -18,5 +18,5 @@ class MyMapper extends Mapper[Text, Text, Text, Text] {
     logger.info(s"Venue - $venue , Authors - $value")
     context.write(new Text(venue), value)
   }
-  def extractPublicationVenue(key: String): String = key.split("` ")(2).stripPrefix("`").stripSuffix("`")
+  def extractPublicationVenue(key: String): String = key.split("` `")(2).stripPrefix("`").stripSuffix("`")
 }

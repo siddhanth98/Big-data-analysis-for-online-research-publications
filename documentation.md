@@ -19,12 +19,14 @@ This is because the program copies the hdfs output directory to this local outpu
       
  - Then to create the CSV file for a task (task2 as an example), run the following:    
  `runMain hadoop.task2.ComputeSpreadSheet output`     
- where the cmd argument 'output' is the name of the local output directory of task2 where the job output file 'part-r-00000' resides.    
+ where the cmd argument 'output' is the name of the local output directory of task2 where the job output file 'part-r-00000' resides.
+ For the 1st 4 tasks, the hdfs output directory is named "output" so use `runMain hadoop.task{1/2/3/4}.ComputeSpreadSheet output`
+ For task 5 and 6, the final job's hdfs output directory is named "finalOutput" so for these use `runMain hadoop.task{5/6}.ComputeSpreadSheet finalOutput`    
  The spreadsheet would be created in the following directory:    
  `src/main/resources/spreadsheets`     
  
 ### Parsing of xml file    
-- The xml parsing programs reside in the `xmlparser` package.    
+  - The xml parsing programs reside in the `xmlparser` package.    
     
   - The ScalaXmlProcessor program parses the entire dblp.xml file (which should reside in  the `src/main/resources/inputs` ) to first create smaller xml files in the `src/main/resources/inputs/shards/` directory.    
     
@@ -40,8 +42,10 @@ This is because the program copies the hdfs output directory to this local outpu
      3. Incollection      
      4. Phdthesis    
     
-  - The XMLParser program will read all chunked xml files in sequence and will create the corresponding text files to be fed to the mappers. These 138 input files will be placed in the same directory as that of the chunked xml files.  
-   If fewer than 138 input files are to be fed to the mappers (possibly to speed up execution time), then the `conf.NUM_INPUT_FILES` entry in the `src/main/resources/configuration/task.conf` file has to be changed to some smaller value.   
+  - Due to the incompleteness of the last PHDThesis publication entry of the 138th chunk, only 137 input files are input to the mappers.
+  
+  - The XMLParser program will read all chunked xml files in sequence and will create the corresponding text files to be fed to the mappers. These 137 input files will be placed in the same directory as that of the chunked xml files.  
+   If fewer than 137 input files are to be fed to the mappers (possibly to speed up execution time), then the `conf.NUM_INPUT_FILES` entry in the `src/main/resources/configuration/task.conf` file has to be changed to some smaller value.   
        
   - Each input file will be read using a KeyValueTextInputFormat in which each line will have the main components of 1 publication.    
   - `` `publication_title_name` `publication_year` `publication_venue_name` ``    
@@ -52,7 +56,7 @@ This is because the program copies the hdfs output directory to this local outpu
     
     
 ## Task Descriptions 
-Each task will create 138 map tasks by default for the corresponding 138 input text files to be processed in parallel and 1 reducer which will perform relevant operations and create the final output file.    
+Each task will create 137 map tasks by default for the corresponding 137 input text files to be processed in parallel and 1 reducer which will perform relevant operations and create the final output file.    
     
 ### Task 1 
 - In this task the problem is to get the top 10 authors with the maximum number of publications in each venue.    
