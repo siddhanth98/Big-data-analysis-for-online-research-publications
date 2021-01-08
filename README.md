@@ -1,100 +1,150 @@
-# Homework 2
-### Description: you will gain experience with a distributed computational problem. The main textbook group will design and implement an instance of the map/reduce computational model whereas the alternative textbook group will use the CORBA model.
-### Grade: 10% + bonus up to 3% for deploying your map/reduce program at [AWS EMR](https://aws.amazon.com/emr) or the EC2 instances for the alternative textbook group.
-#### You can obtain this Git repo using the command git clone git@bitbucket.org:cs441_fall2020/homework2.git. You cannot push your code into this repo, otherwise, your grade for this homework will be ZERO!
+# Homework 2    
 
-## Preliminaries
-If you have not already done so as part of your first homework, you must create your account at [BitBucket](https://bitbucket.org/), a Git repo management system. It is imperative that you use your UIC email account that has the extension @uic.edu. Once you create an account with your UIC address, BibBucket will assign you an academic status that allows you to create private repos. Bitbucket users with free accounts cannot create private repos, which are essential for submitting your homeworks and the course project. Your instructor created a team for this class named [cs441_Fall2020](https://bitbucket.org/cs441_fall2020/). Please contact your TA, Mr.Mohanty from your **UIC.EDU** account and they will add you to the team repo as developers, since they already have the admin privileges. Please use your emails from the class registration roster to add you to the team and you will receive an invitation from BitBucket to join the team. Since it is still a large class, please use your UIC email address for communications or Piazza and avoid emails from other accounts like funnybunny1992@gmail.com. If you don't receive a response within 12 hours, please contact us via Piazza, it may be a case that your direct emails went to the spam folder.
+## Running the programs 
+ - The driver program for every task uses the input shards text files from the path:    
+`src/main/resources/inputs/shards` - The programs were written with a manual hadoop 3.3.0 configuration in a windows 10 platform.    
+    
+- First execute the following commands from a terminal in administrator mode:    
+`start-dfs.cmd` `start-yarn.cmd`    
+ - Ensure the corresponding output directory for the current task is empty:    
+`src/main/resources/outputs/job_outputs/task2` (for task2 as an example)    
+This is because the program copies the hdfs output directory to this local output directory after the job ends, and if the output directory already exists, then it will give an IOException, which can occur if the program is run a 2nd time without deleting the same. The directory cannot be deleted from inside the program as it requires administrator privileges to modify a directory written to by hadoop.    
+    
+- From the project root directory, run `sbt clean compile assembly` which will create the jar of all sources along with all dependencies in the `target\scala-2.12` folder.    
+    
+- Then from the same terminal, run an example driver program (task2) from the project root directory as follows:    
+`hadoop jar target\scala-2.12\thisProject-assembly-0.1.0-SNAPSHOT.jar hadoop.task2.Driver`    
+ - The driver program manages moving the input shards from the local directory to the hdfs directory, deleting the hdfs output directory if it exists before running the program and copying the hdfs output directory to the following local output directory:    
+  `src/main/resources/outputs/job_outputs/task2` (for task2 as an example)    
+      
+ - Then to create the CSV file for a task (task2 as an example), run the following:    
+ `runMain hadoop.task2.ComputeSpreadSheet output`     
+ where the cmd argument 'output' is the name of the local output directory of task2 where the job output file 'part-r-00000' resides.
+ For the 1st 4 tasks, the hdfs output directory is named "output" so use `runMain hadoop.task{1/2/3/4}.ComputeSpreadSheet output`
+ For task 5 and 6, the final job's hdfs output directory is named "finalOutput" so for these use `runMain hadoop.task{5/6}.ComputeSpreadSheet finalOutput`    
+ The spreadsheet would be created in the following directory:    
+ `src/main/resources/spreadsheets`     
+ 
+### Parsing of xml file    
+  - The xml parsing programs reside in the `xmlparser` package.    
+    
+  - The ScalaXmlProcessor program parses the entire dblp.xml file (which should reside in  the `src/main/resources/inputs` ) to first create smaller xml files in the `src/main/resources/inputs/shards/` directory.    
+    
+  - Total number of tags in the dblp.xml file is observed to be 68,757,132.    
+    
+  - If the main parser encounters the end of a valid publication tag (detailed below) and if the total number of tags encountered upto that point is just above an integer multiple of 500,000, then it will wrap all encountered tags in a smaller xml file and place it in the above mentioned directory.    
+    
+  - This results in a total of 138 smaller xml files.    
+    
+  - The publication tags considered are:    
+     1. Article    
+     2. Inproceedings    
+     3. Incollection      
+     4. Phdthesis    
+    
+  - Due to the incompleteness of the last PHDThesis publication entry of the 138th chunk, only 137 input files are input to the mappers.
+  
+  - The XMLParser program will read all chunked xml files in sequence and will create the corresponding text files to be fed to the mappers. These 137 input files will be placed in the same directory as that of the chunked xml files.  
+   If fewer than 137 input files are to be fed to the mappers (possibly to speed up execution time), then the `conf.NUM_INPUT_FILES` entry in the `src/main/resources/configuration/task.conf` file has to be changed to some smaller value.   
+       
+  - Each input file will be read using a KeyValueTextInputFormat in which each line will have the main components of 1 publication.    
+  - `` `publication_title_name` `publication_year` `publication_venue_name` ``    
+ This will be considered the key where the backtick character "`" acts as a unique delimiter to extract required components.    
+    
+  - `` `author1` `author2` `author3`.... ``     
+ This will be considered the value as all the authors for that publication.    
+    
+    
+## Task Descriptions 
+Each task will create 137 map tasks by default for the corresponding 137 input text files to be processed in parallel and 1 reducer which will perform relevant operations and create the final output file.    
+    
+### Task 1 
+- In this task the problem is to get the top 10 authors with the maximum number of publications in each venue.    
+    
+- The **mapper** will take in the above mentioned key value text input, extract the venue and write the venue as the key and the list of authors for the publication as the value in the output.    
+    
+- The **reducer** gets all aggregated author list as the value for a venue from all mappers. This list will have repeated author names as an author can be in multiple publications. It will traverse this list and will store the total publication count of each author in a **HashMap**. Then it will sort the authors based on this count in descending order and will write the top 10 as the output, where the key will be the venue and value will be the top 10 authors.    
+    
+- The spreadsheet program will then read the `part-r-00000` job output file from the output directory for this task, and will put the venue and the list of 10 authors in the csv file.    
+    
+- There are 3 tests defined for this task in the `hadoop.task1` package in the test directory. The 1st tests the mapper, the 2nd tests the reducer and the 3rd tests the overall mapreduce functionality. Mapper/Reducer input values are taken in from the `output_task1.conf` configuration file. To run this test file, execute:    
+`sbt testOnly hadoop.task1.TestTask1`    
+ 
+### Task 2 
+ - For this task the problem is to find all authors who have published for more than 10 contiguous years.    
+    
+- The **mapper** will take in the key and the value text input and for each author in the input value text, it will write a key-value output where the key is the author name and the value is the publication year component extracted from the key.    
+    
+- The **reducer** will take the aggregated years for an author. It will traverse this list of years i.e. integers and if it finds a contiguous sequence of length >= 10, then it will write the output as " " as the key and the author name as the value, as only the author name is required for this task. Noting that there can be repeated year values for the same author, as an author can publish more than once in the same year, the reducer uses a **HashSet** to maintain the collection of years and puts that collection in a list for traversal.    
+    
+- The spreadsheet program simply takes in these author names in the job output file and puts them in the spreadsheet, each author name in one record.    
+    
+- Similar to the 1st task, 3 tests are defined for this task. It can be run as:    
+`sbt testOnly hadoop.task2.TestTask2`    
+ 
+### Task 3 
+ - The problem is to find the all publications in each venue authored by a single person.    
+    
+- The **mapper** takes in the key value input text, and if the value text just contains 1 author, then it will write the venue as the key and the publication title as the value as the output key-value pair. If there are more than 1 author in the value then it would not write any output.    
+    
+- The **reducer** takes in the aggregated title names for a venue collected from all mappers, concatenates all title names together into a string and writes the venue as the key and the concatenated string as the value. It will do this for all venues eventually.    
+    
+- The spreadsheet program will read the job output file and for each venue, it will put the venue and its corresponding list of titles present in the job output file as one record in the csv file.    
+    
+- To run all 3 tests for this task, use: `sbt testOnly hadoop.task3.TestTask3`    
+ 
+### Task 4 
+ - The problem is to find all publications authored by the maximum number of people in each venue.    
+    
+- The **mapper** will take in the key value text input and will write the venue as the key and the title name and the number of authors in the value part of the input text as the value, in the output key-value pair as follows:    
+`key=venue : value=title_name authorCount`    
+ - The **reducer** will take in the aggregated `title_name authorCount` values for a venue, and makes 2 passes over the value pairs. In the 1st pass it will find the largest number of authors that a title has for the given venue i.e. the maximum value of the authorCount of all value pairs. In the 2nd pass, it will collect all titles whose corresponding authorCount values match the maximum authorCount value in the 1st pass i.e. collect all titles having the largest number of authors for that venue. Then it simply writes the venue as the key and the collected title names as the value in the output key-value pair.    
+    
+- The spreadsheet program will write each venue and corresponding names of all titles as 1 record in the csv file. It will do this for all venues present in the job output file.    
+    
+- To run all 3 tests for this task, use: `sbt testOnly hadoop.task4.TestTask4`    
 
-For the main textbook student group, in case you have not done so, you will install [IntelliJ](https://www.jetbrains.com/student/) with your academic license, the JDK, the Scala runtime and the IntelliJ Scala plugin, the [Simple Build Toolkit (SBT)](https://www.scala-sbt.org/1.x/docs/index.html) and make sure that you can create, compile, and run Java and Scala programs. Please make sure that you can run [Java monitoring tools](https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/tooldescr025.html) or you can choose a newer JDK and tools if you want to use a more recent one.
+### Task 5 
+ - The problem is to find the top 100 authors who publish with the maximum number of coAuthors.    
+    
+- For this task, the driver program will create 2 jobs.    
+- In **Job1** the mapper will take in the key value text input, and for each author in the value text, it will write the author name as the key, and all the other authors as the corresponding value text. For example, for an input:    
+`` key = `Towards a Transaction Management System for DOM.` `1991` `GTE Laboratories Incorporated`; value = `Alejandro P. Buchmann` `M. Tamer zsu` `Dimitrios Georgakopoulos` `` it will write the following output key value pairs:    
+	 1. `key = Alejandro P. Buchmann ; value = M. Tamer zsu , Dimitrios Georgakopoulos`    
+	 2. `key = M. Tamer zsu ; value = Alejandro P. Buchmann , Dimitrios Georgakopoulos`    
+	 3. `key = Dimitrios Georgakopoulos ; value = Alejandro P. Buchmann , M. Tamer zsu`    
+    
+	 The reducer will take in the aggregated coAuthorCollection for each author from all mappers, and will use a hashSet to count the number of unique coAuthors that the given author has. Then it will write the author name as the key and the coAuthorCount as the value in its output. For (1) above, the output will be :    
+	   `` key = `Alejandro P. Buchmann` ; value = 2 ``    
+ - In **Job2** the mapper will read in the job1 output file from the hdfs output directory, and will simply invert the key and the value write the corresponding output, as:    
+`key = 2 ; value = Alejandro P. Buchmann`    
+    
+ Note that the job2 mappers read input in the normal text value input format where the key determines the offset of each line and the value is all of the text in the line.    
+   Now when all mappers have finished executing the output key value pairs are sorted based on the key value in descending order using a custom descending intWritable comparator which job2 uses. Then the inverse sorted key value pairs will be input to the job2 reducer which will simply write the input directly as the output in the final output file in the /finalOutput hdfs output directory.    
+    
+- The spreadsheet program will take in the job output file `part-r-00000` in the local output directory of task5 and will write the top 100 author details in the csv file.    
+  
+- The test file hadoop.task5.TestTask5 consists of 4 tests for this task. The 1st 2 tests test the functionality of the mapper and reducer of job1 respectively and the 2nd 2 tests test the functionality of the mapper and reducer of job2 respectively. These 4 tests can be run using : `sbt testOnly hadoop.task5.TestTask5`  
+  
+### Task 6 
+  - For this task, the problem is to find the top 100 authors who have the maximum number of single author publications or solo-publications.    
+    
+- Similar to task5, this task uses 2 jobs.    
+    
+- In **Job1**, the mapper will take in the input key value text and if the value contains just one author, only then will it write the output as:    
+`key = authorName ; value = 1` representing 1 solo publication by that author.    
+If there are more than 1 author then it would not write anything.    
+The reducer will take in the aggregated 1's from all mappers for an author, sum up all 1's which represent the total number of solo publications by that author and write the output as :    
+`key = authorName ; value = total-solo-publication-count`    
+ - In **Job2**, the mapper will read the output file of job1 as a normal text input format, then it will invert the publication count and author name, and will write the output as:    
+`key = total-solo-publication-count ; value = authorName` Similar to job5, outputs from all mappers are sorted in descending order of the publication count values (given by the output keys) using the custom descending intWritable comparator and will input the key value pairs to the reducer in that order.    
+The reducer will simply take in the input and write it as it is in the final output file.    
+    
+- The spreadsheet program is same as that of job5, in that it will put the top 100 lines of the job2 output file in the csv file, each line as 1 record in the csv file.  
+  
+- Similar to task5, 4 tests are defined for this task in the test file hadoop.task6.TestTask6. They can be run using:  
+`sbt testOnly hadoop.task6.TestTask6`
 
-
-Please set up your account with [AWS Educate](https://aws.amazon.com/education/awseducate/). Using your UIC email address will enable you to receive free credits for running your jobs in the cloud. Preferably, you should create your developer account for $30 per month to enjoy the full range of AWS services.
-
-You will use logging and configuration management frameworks. You will comment your code extensively and supply logging statements at different logging levels (e.g., TRACE, INFO, ERROR) to record information at some salient points in the executions of your programs. All input and configuration variables must be supplied through configuration files -- hardcoding these values in the source code is prohibited and will be punished by taking a large percentage of points from your total grade! You are expected to use [Logback](https://logback.qos.ch/) and [SLFL4J](https://www.slf4j.org/) for logging and [Typesafe Conguration Library](https://github.com/lightbend/config) for managing configuration files. These and other libraries should be exported into your project using your script [build.sbt](https://www.scala-sbt.org/1.0/docs/Basic-Def-Examples.html). Alternatively, you can use Python or C++ libraries for CORBA. These libraries and frameworks are widely used in the industry, so learning them is the time well spent to improve your resume.
-
-## Overview
-In this homework, you will create a distributed program for parallel processing of the [publically available DBLP dataset](https://dblp.uni-trier.de) that contains entries for various publications at many different venues (e.g., conferences and journals). Raw [XML-based DBLP dataset](https://dblp.uni-trier.de/xml) is also publically available along with its schema and the documentation.
-
-Each entry in the dataset describes a publication, which contains the list of authors, the title, and the publication venue and a few other attributes. The file is approximately 2.5Gb - not big by today's standards, but large enough for this homework assignment. Each entry is independent from the other one in that it can be processed without synchronizing with processing some other entries.
-
-Consider the following entry in the dataset.
-```xml
-<inproceedings mdate="2017-05-24" key="conf/icst/GrechanikHB13">
-<author>Mark Grechanik</author>
-<author>B. M. Mainul Hossain</author>
-<author>Ugo Buy</author>
-<title>Testing Database-Centric Applications for Causes of Database Deadlocks.</title>
-<pages>174-183</pages>
-<year>2013</year>
-<booktitle>ICST</booktitle>
-<ee>https://doi.org/10.1109/ICST.2013.19</ee>
-<ee>http://doi.ieeecomputersociety.org/10.1109/ICST.2013.19</ee>
-<crossref>conf/icst/2013</crossref>
-<url>db/conf/icst/icst2013.html#GrechanikHB13</url>
-</inproceedings>
-```
-
-This entry lists a paper at the IEEE International Conference on Software Testing, Verification and Validation (ICST) published in 2013 whose authors are my former Ph.D. student at UIC, now tenured Associate Professor at the University of Dhaka, Prof. Dr. B.M. Mainul Hussain whose advisor Prof.Mark Grechanik is a co-author on this paper. The third co-author is Prof.Ugo Buy, a faculty member at our CS department. The presence of three co-authors in a single publication like this one increments a count variable that represents the number of publications with three co-authors. Your job is to determine the distribution of the number of authors across many different journals and conferences using the information extracted from this dataset. Paritioning this dataset into shards is easy, since it requires to preserve the well-formedness of XML only. Most likely, you will write a simple program to partition the dataset into an approximately equal size shards.
-
-As before, this homework script is written using a retroscripting technique, in which the homework outlines are generally and loosely drawn, and the individual students improvise to create the implementation that fits their refined objectives. In doing so, students are expected to stay within the basic requirements of the homework and they are free to experiments. Asking questions is important, so please ask away at Piazza!
-
-## Functionality
-Your homework assignment is to create a program for parallel distributed processing of the publication dataset. Your goal is to produce the following statistics about the authors and the venues they published their papers at. First, you will compute a spreadsheet or an CSV file that shows top ten published authors at each venue. Second, you will compute the list of authors who published without interruption for N years where 10 <= N. Then, for each venue you will produce the list of publications that contains only one author. Next, you will produce the list of publications for each venue that contain the highest number of authors for each of these venues. Finally, you will produce the list of top 100 authors in the descending order who publish with most co-authors and the list of 100 authors who publish without any co-authors. 
-
-### Assignment for the main textbook group
-Your job is to create the mapper and the reducer for each task, explain how they work, and then to implement them and run on the DBLP dataset. The output of your map/reduce is a spreadsheet or an CSV file with the required statistics. The explanation of the map/reduce model is given in the main textbook in Chapter 4.
-
-You will create and run your software application using [Apache Hadoop](http://hadoop.apache.org/), a framework for distributed processing of large data sets across multiple computers (or even on a single node) using the map/reduce model. If your laptop/workstation is limited in its RAM, you can use [Cloudera QuickStart VM with the minimum req of RAM 4Gb](https://www.cloudera.com/downloads/quickstart_vms/5-12.html). Even though you can install and configure Hadoop on your computers, I recommend that you use a virtual machine (VM) of [Hortonworks Sandbox](http://hortonworks.com/products/sandbox/), a preconfigured Apache Hadoop installation with a comprehensive software stack. To run the VM, you can install vmWare or VirtualBox. As UIC students, you have access to free vmWare licenses, go to http://go.uic.edu/csvmware to obtain your free license. In some cases, I may have to provide your email addresses to a department administrator to enable your free VM academic licenses. Please notify me if you cannot register and gain access to the webstore.
-
-The steps for obtaining your free academic vmWare licenses are the following:
-- Contact [Mr.Phil Bertran](pbeltr1@uic.edu) and CC to [DrMark](drmark@uic.edu) to obtain access to the vmWare academic program.
-- One approved, go to [Onthehub vmWare](http://go.uic.edu/csvmware).
-- Click on the "sign in" link at the top.
-- Click on "register".
-- Select "An account has been created..." and continue with the registration.
-- Make sure that you use the UIC email with which you are registered with the system.
-
-Only UIC students who are registered for this course are eligible. If you are auditing the course, you need to contact the uic webstore directly. Alternatively, you can use [VirtualBox from Oracle Corp](https://www.virtualbox.org/).
-
-You can complete this homework using Scala and __you will immensely enjoy__ the embedded XML processing facilities that come with Scala. You will use Simple Build Tools (SBT) for building the project and running automated tests. I recommend that you run the downloaded VM locally in vmWare or VirtualBox to develop and test your program before you move it to AWS.
-
-Next, after creating and testing your map/reduce program locally, you will deploy it and run it on the Amazon Elastic MapReduce (EMR) - you can find plenty of [documentation online](http://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-work-with-steps.html). You will produce a short movie that documents all steps of the deployment and execution of your program with your narration and you will upload this movie to [youtube](www.youtube.com) and you will submit a link to your movie as part of your submission in the README.md file. To produce a movie, you may use an academic version of [Camtasia](https://shop.techsmith.com/store/techsm/en_US/cat/categoryID.67158100) or some other cheap/free screen capture technology from the UIC webstore or an application for a movie capture of your choice. The captured web browser content should show your login name in the upper right corner of the AWS application and you should introduce yourself in the beginning of the movie speaking into the camera.
-
-### Assignment for the alternative textbook group
-Your job is to create the distributed objects using [omniOrb CORBA framework](http://omniorb.sourceforge.net/omni42/omniORB/) for each task, explain how they work, and then to implement them and run on the DBLP dataset. The output of your distributed system is a spreadsheet or an CSV file with the required statistics. The explanation of the CORBA is given in the alternative textbook in Chapter 7 -Guide to Reliable Distributed Systems: Building High-Assurance Applications and Cloud-Hosted Services 2012th Edition by Kenneth P. Birman. You can complete your implementation using C++ or Python.
-
-Next, after creating and testing your program locally, you will deploy it and run it on the AWS EC2 IaaS. You will produce a short movie that documents all steps of the deployment and execution of your program with your narration and you will upload this movie to [youtube](www.youtube.com) and you will submit a link to your movie as part of your submission in the README.md file. To produce a movie, you may use an academic version of [Camtasia](https://shop.techsmith.com/store/techsm/en_US/cat/categoryID.67158100) or some other cheap/free screen capture technology from the UIC webstore or an application for a movie capture of your choice. The captured web browser content should show your login name in the upper right corner of the AWS application and you should introduce yourself in the beginning of the movie speaking into the camera.
-
-
-## Baseline Submission
-Your baseline project submission should include your implementation, a conceptual explanation in the document or in the comments in the source code of how your mapper and reducer work to solve the problem, and the documentation that describe the build and runtime process, to be considered for grading. Your project submission should include all your source code written in Scala as well as non-code artifacts (e.g., configuration files), your project should be buildable using the SBT, and your documentation must specify how you paritioned the data and what input/outputs are. Simply copying Java programs from examples at the DBLP website and modifying them a bit will result in rejecting your submission.
-
-## Piazza collaboration
-You can post questions and replies, statements, comments, discussion, etc. on Piazza. For this homework, feel free to share your ideas, mistakes, code fragments, commands from scripts, and some of your technical solutions with the rest of the class, and you can ask and advise others using Piazza on where resources and sample programs can be found on the internet, how to resolve dependencies and configuration issues. When posting question and answers on Piazza, please select the appropriate folder, i.e., hw2 to ensure that all discussion threads can be easily located. Active participants and problem solvers will receive bonuses from the big brother :-) who is watching your exchanges on Piazza (i.e., your class instructor). However, *you must not describe your map/reduce design or specific details related how your construct your map/reduce pipeline!*
-
-## Git logistics
-**This is an individual homework.** Separate repositories will be created for each of your homeworks and for the course project. You will find a corresponding entry for this homework at git@bitbucket.org:cs441_fall2020/homework2.git. You will fork this repository and your fork will be private, no one else besides you, the TA and your course instructor will have access to your fork. Please remember to grant a read access to your repository to your TA and your instructor. In future, for the team homeworks and the course project, you should grant the write access to your forkmates, but NOT for this homework. You can commit and push your code as many times as you want. Your code will not be visible and it should not be visible to other students (except for your forkmates for a team project, but not for this homework). When you push the code into the remote repo, your instructor and the TA will see your code in your separate private fork. Making your fork public, pushing your code into the main repo, or inviting other students to join your fork for an individual homework will result in losing your grade. For grading, only the latest push timed before the deadline will be considered. **If you push after the deadline, your grade for the homework will be zero**. For more information about using the Git and Bitbucket specifically, please use this [link as the starting point](https://confluence.atlassian.com/bitbucket/bitbucket-cloud-documentation-home-221448814.html). For those of you who struggle with the Git, I recommend a book by Ryan Hodson on Ry's Git Tutorial. The other book called Pro Git is written by Scott Chacon and Ben Straub and published by Apress and it is [freely available](https://git-scm.com/book/en/v2/). There are multiple videos on youtube that go into details of the Git organization and use.
-
-Please follow this naming convention while submitting your work : "Firstname_Lastname_hw2" without quotes, where you specify your first and last names **exactly as you are registered with the University system**, so that we can easily recognize your submission. I repeat, make sure that you will give both your TA and the course instructor the read access to your *private forked repository*.
-
-## Discussions and submission
-You can post questions and replies, statements, comments, discussion, etc. on Piazza. Remember that you cannot share your code and your solutions privately, but you can ask and advise others using Piazza and StackOverflow or some other developer networks where resources and sample programs can be found on the Internet, how to resolve dependencies and configuration issues. Yet, your implementation should be your own and you cannot share it. Alternatively, you cannot copy and paste someone else's implementation and put your name on it. Your submissions will be checked for plagiarism. **Copying code from your classmates or from some sites on the Internet will result in severe academic penalties up to the termination of your enrollment in the University**. When posting question and answers on Piazza, please select the appropriate folder, i.e., hw1 to ensure that all discussion threads can be easily located.
-
-
-## Submission deadline and logistics
-Saturday, October 17 at 11PM CST via the bitbucket repository. Your submission will include the code for your program, your documentation with instructions and detailed explanations on how to assemble and deploy your program along with the results of its run and what the limitations of your implementation are. Again, do not forget, please make sure that you will give both your TA and your instructor the read access to your private forked repository. Your name should be shown in your README.md file and other documents. Your code should compile and run from the command line using the commands **sbt clean compile test** and **sbt clean compile run** or some other build/run system like cmake. Also, you project should be IntelliJ or PyCharm or CLion friendly, i.e., your graders should be able to import your code into IntelliJ and run from there. Use .gitignore to exlude files that should not be pushed into the repo.
-
-
-## Evaluation criteria
-- the maximum grade for this homework is 10% with the bonus up to 3% for doing the AWS EMR part. Points are subtracted from this maximum grade: for example, saying that 2% is lost if some requirement is not completed means that the resulting grade will be 10%-2% => 8%; if the core homework functionality does not work, no bonus points will be given;
-- the code does not work in that it does not produce a correct output or crashes: up to 5% lost;
-- having less than five unit and/or integration tests: up to 4% lost;
-- missing comments and explanations from the program: up to 5% lost;
-- logging is not used in the program: up to 3% lost;
-- hardcoding the input values in the source code instead of using the suggested configuration libraries: up to 4% lost;
-- no instructions in README.md on how to install and run your program: up to 10% lost;
-- the documentation exists but it is insufficient to understand how you assembled and deployed all components of the cloud: up to 4% lost;
-- the minimum grade for this homework cannot be less than zero.
-
-That's it, folks!
+### AWS EMR
+- This video shows the running of the task1 job on an AWS EMR cluster.
+- https://www.youtube.com/watch?v=iU2y5y9SJ90&feature=youtu.be 
