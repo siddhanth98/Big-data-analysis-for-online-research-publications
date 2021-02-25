@@ -1,4 +1,4 @@
-# Homework 2    
+# Distributed Data Analysis using Apache Hadoop    
 
 ## Running the programs 
  - The driver program for every task uses the input shards text files from the path:    
